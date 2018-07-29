@@ -1,2 +1,3 @@
 /src/mysql/*
 /src/rest/app/node_modules
+/src/rest/app/package-lock.json

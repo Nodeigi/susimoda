@@ -24,16 +24,12 @@ minikube-init:
 	@ while [[ `$(MINIKUBE) status --format {{.MinikubeStatus}}` != *"Running"* ]]; do sleep 3;  echo -n "."; done
 	@ echo -e "\nminikube is ready to go!"
 
+shutdown: unmount-nfs-dir
+	$(MINIKUBE) stop
+
 ##############################################################################
 ## NFS #######################################################################
 ##############################################################################
-
-create-nfs:
-	@ echo "Run NFS"
-	envsubst < k8s/storage/nfs.yaml | $(KUBECTL) $(KUBECTL_CREATE_METHOD) -f -
-	envsubst < k8s/deployment/nfs.yaml | $(KUBECTL) $(KUBECTL_CREATE_METHOD) -f -
-	envsubst < k8s/service/nfs.yaml | $(KUBECTL) $(KUBECTL_CREATE_METHOD) -f -
-
 
 minikube-expose-nfs:
 	echo "Prepare minikube to expose NFS server"
@@ -47,6 +43,9 @@ mount-nfs-dir: minikube-expose-nfs
 	sudo sh -c 'mountpoint -q $(CURDIR)/src || mount -t nfs -o resvport,rw,nfsvers=3,nolock,proto=udp,port=2049 $(MINIKUBE_IP):/data $(CURDIR)/src'
 	sudo sh -c 'cat /etc/hosts | grep -v susimoda.local.io > /tmp/hosts && echo "$(MINIKUBE_IP)	susimoda.local.io" >> /tmp/hosts && mv /tmp/hosts /etc/hosts'
 	
+unmount-nfs-dir:
+	echo "Unmount NFS disk from minikube"
+	sudo umount $(CURDIR)/src -f
 
 ##############################################################################
 ## MYSQL #####################################################################
