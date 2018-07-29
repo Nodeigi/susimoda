@@ -7,14 +7,14 @@ export
 MINIKUBE=minikube --profile=susimoda
 
 # kubernetes settings
-KUBECTL=/usr/local/bin/kubectl
+KUBECTL=kubectl
 
 # should we create configuration or apply it?
 KUBECTL_CREATE_METHOD=apply
 
 CURDIR=/home/luigi/Projects/movies
 
-all: create-nfs create-mysql create-rest
+all: minikube-init mount-nfs-dir create-mysql fetch-repository create-rest
 
 minikube-init:
 	@ echo "Check if minikube is already running. If not - start it!"
@@ -28,7 +28,7 @@ shutdown: unmount-nfs-dir
 	$(MINIKUBE) stop
 
 ##############################################################################
-## NFS #######################################################################
+## REPOSITORIES ##############################################################
 ##############################################################################
 
 minikube-expose-nfs:
@@ -47,6 +47,17 @@ unmount-nfs-dir:
 	echo "Unmount NFS disk from minikube"
 	sudo umount $(CURDIR)/src -f
 
+create-dirs:
+	mkdir -p -m 777 $(CURDIR)/src/rest
+	
+fetch-repository: create-dirs
+	@ echo "Get rest repository"
+	@ if [ ! -d $(CURDIR)/src/rest/.git ] ; \
+	then \
+		git clone -b $(REST_GIT_BRANCH) $(REST_GIT_REPO) $(CURDIR)/src/rest ; \
+	fi
+	@ chmod -R 777 $(CURDIR)/src/rest
+
 ##############################################################################
 ## MYSQL #####################################################################
 ##############################################################################
@@ -59,15 +70,16 @@ create-mysql:
 	
 destroy-mysql:
 	@ echo "Destroy MySQL server pod"
-	envsubst < k8s/deployment/mysql.yaml | $(KUBECTL) delete -f -	
-
+	envsubst < k8s/deployment/mysql.yaml | $(KUBECTL) delete -f -
+	envsubst < k8s/service/mysql.yaml | $(KUBECTL) delete -f -
+	envsubst < k8s/storage/mysql.yaml | $(KUBECTL) delete -f -
 
 ##############################################################################
 ## REST ######################################################################
 ##############################################################################
 
 create-rest:
-	docker run -it node -w /usr/src/app -v $(CURDIR)/src/rest/app:/usr/src/app node:latest npm install
+	docker run -it -w /usr/src/app -v $(CURDIR)/src/rest/app:/usr/src/app node:10.7 npm install
 	envsubst < k8s/storage/rest.yaml | $(KUBECTL) $(KUBECTL_CREATE_METHOD) -f -
 	envsubst < k8s/deployment/rest.yaml | $(KUBECTL) $(KUBECTL_CREATE_METHOD) -f -
 	envsubst < k8s/service/rest.yaml | $(KUBECTL) $(KUBECTL_CREATE_METHOD) -f -

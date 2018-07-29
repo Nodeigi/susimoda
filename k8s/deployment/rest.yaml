@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: rest-server
-          image: node:latest
+          image: node:10.7
           command: ["npm", "start"]
           workingDir: /usr/src/app
           ports:
@@ -44,6 +44,8 @@ spec:
               value: "$MYSQL_DB_NAME"
             - name: DB_DIALECT
               value: "mysql"
+            - name: REST_INTERNAL_PORT
+              value: "$REST_INTERNAL_PORT"
       volumes:
         - name: sources
           hostPath:
