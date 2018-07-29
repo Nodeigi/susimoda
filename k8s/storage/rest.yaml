@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: rest-pv
+spec:
+  capacity:
+    storage: 6Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: /data/rest
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: rest-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 6Gi

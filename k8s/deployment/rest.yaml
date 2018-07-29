@@ -1,0 +1,50 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: rest-server
+  labels:
+    app: rest-server
+spec:
+  strategy:
+    type: Recreate
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rest-server
+  template:
+    metadata:
+      labels:
+        app: rest-server
+        tier: backend
+        track: stable
+    spec:
+      containers:
+        - name: rest-server
+          image: node:latest
+          command: ["npm", "start"]
+          workingDir: /usr/src/app
+          ports:
+            - containerPort: ${REST_INTERNAL_PORT}
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: sources
+              mountPath: /usr/src/app
+          env:
+            - name: OMDB_API_KEY
+              value: "$OMDB_API_KEY"
+            - name: DB_HOST
+              value: "$DB_INTERNAL_HOST"
+            - name: DB_PORT
+              value: "$DB_INTERNAL_PORT"
+            - name: DB_USER
+              value: "$MYSQL_USER"
+            - name: DB_PASSWORD
+              value: "$MYSQL_PASSWORD"
+            - name: DB_NAME
+              value: "$MYSQL_DB_NAME"
+            - name: DB_DIALECT
+              value: "mysql"
+      volumes:
+        - name: sources
+          hostPath:
+            path: /data/rest/app

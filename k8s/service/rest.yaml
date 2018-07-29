@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${REST_INTERNAL_HOST}
+spec:
+  ports:
+    - name: rest
+      port: ${REST_INTERNAL_PORT}
+      nodePort: ${REST_PUBLIC_PORT}
+  selector:
+    app: rest-server
+    tier: backend
+    track: stable
+  type: LoadBalancer

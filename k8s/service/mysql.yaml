@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${DB_INTERNAL_HOST}
+spec:
+  ports:
+    - name: mysqld
+      port: ${DB_INTERNAL_PORT}
+  selector:
+    app: mysql-server
+    tier: backend
+    track: stable
