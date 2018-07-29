@@ -14,7 +14,7 @@ KUBECTL_CREATE_METHOD=apply
 
 CURDIR=/home/luigi/Projects/movies
 
-all: minikube-init mount-nfs-dir create-mysql fetch-repository create-rest
+all: minikube-init mount-nfs-dir create-mysql wait-for-mysql fetch-repository create-rest
 
 minikube-init:
 	@ echo "Check if minikube is already running. If not - start it!"
@@ -73,6 +73,12 @@ destroy-mysql:
 	envsubst < k8s/deployment/mysql.yaml | $(KUBECTL) delete -f -
 	envsubst < k8s/service/mysql.yaml | $(KUBECTL) delete -f -
 	envsubst < k8s/storage/mysql.yaml | $(KUBECTL) delete -f -
+
+wait-for-mysql:
+	@ echo "Waiting for POD with MySQL app running...";
+	@ while [[ `kubectl get pod -l app=mysql-server -o jsonpath='{.items[*].status.phase}'` != "Running" ]]; do sleep 3;  echo -n "."; done
+	$(eval POD_DATABASE_NAME:=$(shell $(KUBECTL) get pods -l "app=mysql-server" -o jsonpath='{.items[*].metadata.name}'))
+	-while !(kubectl exec -it ${POD_DATABASE_NAME} -- mysqladmin -w ping  -uroot -p$(MYSQL_PASSWORD)); do sleep 2;  echo -n "."; done
 
 ##############################################################################
 ## REST ######################################################################
