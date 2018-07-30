@@ -12,8 +12,6 @@ KUBECTL=kubectl
 # should we create configuration or apply it?
 KUBECTL_CREATE_METHOD=apply
 
-CURDIR=/home/luigi/Projects/movies
-
 all: minikube-init mount-nfs-dir create-mysql wait-for-mysql fetch-repository create-rest
 
 minikube-init:
@@ -40,6 +38,7 @@ minikube-expose-nfs:
 mount-nfs-dir: minikube-expose-nfs
 	echo "Mount NFS disk from minikube"
 	$(eval MINIKUBE_IP:=$(shell $(MINIKUBE) ip))
+	mkdir -p -m 777 $(CURDIR)/src
 	sudo sh -c 'mountpoint -q $(CURDIR)/src || mount -t nfs -o resvport,rw,nfsvers=3,nolock,proto=udp,port=2049 $(MINIKUBE_IP):/data $(CURDIR)/src'
 	sudo sh -c 'cat /etc/hosts | grep -v susimoda.local.io > /tmp/hosts && echo "$(MINIKUBE_IP)	susimoda.local.io" >> /tmp/hosts && mv /tmp/hosts /etc/hosts'
 	
